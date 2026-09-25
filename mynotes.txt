@@ -1,0 +1,16 @@
+Who will use the system: ADMIN, CUSTOMERS, (For now).
+What are they doing: customers will register based on their details and administer a benefitiary/dependant and will pick a particular product- : productin this sence is a particular inturance cover eg. health, 
+medical,life etc.
+
+once they have registered for that it goes for approval and once it is approved it then goes to a pdf being printed basing the insurance 
+i believe the screens should be based on the users : 2 main users and also should have the same format that i had on my previous projects(thats my way.
+we will not go through with the authentication and authorisation first- we will do that one later.
+The authentication is also different than what we have been using.(OAuth not keycloak)
+
+After submission- pdf is given and once it has, it is then proceeded to be audited.
+
+customer ifo is seed by the customer. and ofc the admin has acces to all customers info (also has the list)
+
+we wlll think about the payment and its process later.
+
+currently have the db running locally using the DB Name: insurance DB USERNAME: insurance and Password as :password and user is 
