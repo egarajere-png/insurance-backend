@@ -1,5 +1,7 @@
 package com.abcbank.insurance.services;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -65,6 +67,29 @@ public class CustomerProductService {
 		log.info("================ customerProduct: {}", customerProduct);
 		applicationPDFGenerator.generateApplicationPDF(customerProduct);
 		return customer;
+	}
+
+	/**
+	 * Generates (or regenerates) the application PDF for the customer's most
+	 * recent product application and returns the raw file bytes so a controller
+	 * can stream it back to the caller. Returns null if the customer has no
+	 * application on file or generation fails (e.g. no NOMINATED dependant yet).
+	 */
+	public byte[] downloadApplicationPdf(String email) throws java.io.IOException {
+		Customer customer = cService.getCustomerByEmail(email);
+		if (customer == null) {
+			return null;
+		}
+		List<CustomerProduct> customerProducts = repo.findByCustomer(customer);
+		if (customerProducts.isEmpty()) {
+			return null;
+		}
+		CustomerProduct customerProduct = customerProducts.get(0);
+		File file = applicationPDFGenerator.generateApplicationPDF(customerProduct);
+		if (file == null || !file.exists()) {
+			return null;
+		}
+		return Files.readAllBytes(file.toPath());
 	}
 	
 	public CustomerProduct getCustomerProduct(int customerId, int productId) {

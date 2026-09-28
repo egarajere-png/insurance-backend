@@ -60,7 +60,7 @@ public class ApplicationPDFGenerator {
 	@Autowired
 	private DependantService dService;
 
-	public void generateApplicationPDF(CustomerProduct customerProduct) {
+	public File generateApplicationPDF(CustomerProduct customerProduct) {
 		ApplicationPDFGenerator.customerProduct = customerProduct;
 		FILE = "/tmp/" + customerProduct.getCustomer().getIdNumber() + ".pdf";
 		log.info("File path {}", FILE);
@@ -84,7 +84,9 @@ public class ApplicationPDFGenerator {
 			document.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		}
+		return new File(FILE);
 	}
 
 	private void addMetaData(Document document) {

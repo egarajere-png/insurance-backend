@@ -59,7 +59,7 @@ public class DependantService {
 	}
 	
 	public List<Dependant> getBeneficiaries(Customer customer) {
-		List<Dependant> beneficiaries = repo.findByCustomerAndPersonType(customer, PersonType.BOTH);
+		List<Dependant> beneficiaries = repo.findByCustomerAndPersonType(customer, PersonType.BENEFICIARY);
 		return beneficiaries.size() > 0 ? beneficiaries : new ArrayList<>();
 	}
 	
