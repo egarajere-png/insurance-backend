@@ -10,3 +10,5 @@ spring:
     username: insurance_user
     password: password
     url: jdbc:postgresql://localhost:5432/insurance?createDatabaseIfNotExist=true
+
+    
