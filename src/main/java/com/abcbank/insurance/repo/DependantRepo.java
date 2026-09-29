@@ -15,5 +15,4 @@ public interface DependantRepo extends JpaRepository<Dependant, Integer> {
 	List<Dependant> findAll();
 	List<Dependant> findByCustomer(Customer customer);
 	List<Dependant> findByCustomerAndPersonType(Customer customer, PersonType personType);
-	Customer findByIdNumber(String idNumber);
 }

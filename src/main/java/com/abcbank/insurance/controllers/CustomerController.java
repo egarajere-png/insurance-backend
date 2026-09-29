@@ -14,36 +14,42 @@ import com.abcbank.insurance.dto.CustomerDto;
 import com.abcbank.insurance.entities.Customer;
 import com.abcbank.insurance.services.CustomerService;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/insurance")
 public class CustomerController {
-	
+
 	@Autowired
 	private CustomerService cService;
-	
+
 	@PostMapping("/customer")
-	public Customer createCustomer(@RequestBody CustomerDto customerDto) {
+	public Customer createCustomer(@Valid @RequestBody CustomerDto customerDto) {
 		return cService.createCustomer(customerDto);
 	}
-	
+
 	@GetMapping("/customer/list")
 	public List<Customer> getCustomers() {
 		return cService.getCustomers();
 	}
-	
+
+	@GetMapping("/customer/{id}")
+	public Customer getCustomerById(@PathVariable int id) {
+		return cService.getCustomer(id);
+	}
+
 	@GetMapping("/customer/email/{email}")
 	public Customer getCustomer(@PathVariable String email) {
 		return cService.getCustomerByEmail(email);
 	}
-	
+
 	@GetMapping("/customer/id-number/{idNumber}")
 	public Customer getCustomerByIdNumber(@PathVariable String idNumber) {
 		return cService.getCustomerByIdNumber(idNumber);
 	}
-	
+
 	@GetMapping("/customer/phone-number/{phoneNumber}")
 	public Customer getCustomerByPhone(@PathVariable String phoneNumber) {
 		return cService.getCustomerByPhone(phoneNumber);

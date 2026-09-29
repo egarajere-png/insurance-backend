@@ -15,7 +15,8 @@ spring:
 
 logging:
   file:
-    name: /logs/abcib-api.log
+    # Relative path so it works on Windows and Linux alike (was /logs/... which fails on Windows)
+    name: logs/abcib-api.log
   logback:
     rollingpolicy:
       max-history: 100

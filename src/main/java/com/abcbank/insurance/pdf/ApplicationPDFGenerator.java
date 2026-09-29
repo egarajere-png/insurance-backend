@@ -55,19 +55,38 @@ public class ApplicationPDFGenerator {
 	private static Font tinyItalic = new Font(Font.FontFamily.HELVETICA, 9, Font.BOLDITALIC);
 
 	@Autowired
-	private static CustomerProduct customerProduct;
-
-	@Autowired
 	private DependantService dService;
 
+	/** Set for the duration of a single generateApplicationPDF() call. */
+	private CustomerProduct customerProduct;
+
 	public File generateApplicationPDF(CustomerProduct customerProduct) {
-		ApplicationPDFGenerator.customerProduct = customerProduct;
-		FILE = "/tmp/" + customerProduct.getCustomer().getIdNumber() + ".pdf";
+		if (customerProduct == null || customerProduct.getCustomer() == null) {
+			log.error("Cannot generate PDF: no application/customer given");
+			return null;
+		}
+		if (customerProduct.getCustomer().getDateOfBirth() == null) {
+			log.error("Cannot generate PDF: customer {} has no date of birth on file", customerProduct.getCustomer().getIdNumber());
+			return null;
+		}
+		Dependant nominated = dService.getNominatedBeneficiary(customerProduct.getCustomer(), PersonType.NOMINATED);
+		if (nominated == null) {
+			log.error("Cannot generate PDF: customer {} has no NOMINATED dependant", customerProduct.getCustomer().getIdNumber());
+			return null;
+		}
+		if (nominated.getDateOfBirth() == null) {
+			log.error("Cannot generate PDF: nominated beneficiary for customer {} has no date of birth", customerProduct.getCustomer().getIdNumber());
+			return null;
+		}
+		this.customerProduct = customerProduct;
+		FILE = "/tmp/" + customerProduct.getCustomer().getIdNumber() + "-" + customerProduct.getId() + ".pdf";
 		log.info("File path {}", FILE);
-		try {
-			Document document = new Document();
+		Document document = new Document();
+		try (FileOutputStream out = new FileOutputStream(FILE)) {
 			document.setMargins(25, 25, 25, 25);
-			PdfWriter.getInstance(document, new FileOutputStream(FILE));
+			// One writer for the whole document — a second PdfWriter.getInstance()/document.open()
+			// call (as the old addImage() did) corrupts the file, which is why downloads used to fail.
+			PdfWriter.getInstance(document, out);
 			document.open();
 			addMetaData(document);
 			addImage(document);
@@ -81,10 +100,13 @@ public class ApplicationPDFGenerator {
 			addSectionHealthStatement(document);
 			addSectionDeclaration(document);
 			addSectionTermsSummary(document);
-			document.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Failed to generate application PDF", e);
 			return null;
+		} finally {
+			if (document.isOpen()) {
+				document.close();
+			}
 		}
 		return new File(FILE);
 	}
@@ -144,7 +166,7 @@ public class ApplicationPDFGenerator {
 	private void addSectionPrincipal(Document document)
 			throws DocumentException {
 		Customer customer = customerProduct.getCustomer();
-		String dob = new SimpleDateFormat("dd/MM/yyyy").format(customer.getDateOfBirth());
+		String dob = customer.getDateOfBirth() == null ? "" : new SimpleDateFormat("dd/MM/yyyy").format(customer.getDateOfBirth());
 		Paragraph preface = new Paragraph();
 		addEmptyLine(preface, 1);
 		preface.add(new Paragraph("PART A - PRINCIPLE MEMBER", blueFontUnderline));
@@ -186,9 +208,8 @@ public class ApplicationPDFGenerator {
 	private void addSectionNominated(Document document)
 			throws DocumentException {
 
-		//Dependant nominated = customerProduct.getCustomer().getNominatedBeneficiary();
 		Dependant nominated = dService.getNominatedBeneficiary(customerProduct.getCustomer(), PersonType.NOMINATED);
-		String dob = new SimpleDateFormat("dd/MM/yyyy").format(nominated.getDateOfBirth());
+		String dob = nominated.getDateOfBirth() == null ? "" : new SimpleDateFormat("dd/MM/yyyy").format(nominated.getDateOfBirth());
 		String email = nominated.getEmail();
 		Paragraph preface = new Paragraph();
 		addEmptyLine(preface, 1);
@@ -311,7 +332,7 @@ public class ApplicationPDFGenerator {
 			String mobileNumber = "";
 			if(dependant != null) {
 				name = dependant.getName();
-				dob = new SimpleDateFormat("dd/MM/yyyy").format(dependant.getDateOfBirth());
+				dob = dependant.getDateOfBirth() == null ? "" : new SimpleDateFormat("dd/MM/yyyy").format(dependant.getDateOfBirth());
 				relationship = dependant.getRelationship();
 				mobileNumber = dependant.getMobileNumber();
 			}
@@ -458,11 +479,7 @@ public class ApplicationPDFGenerator {
 	}
 
 	private void addImage(Document document) {
-		OutputStream outputStream;
 		try {
-			outputStream = new FileOutputStream(new File(FILE));
-			PdfWriter.getInstance(document, outputStream);
-			document.open();
 			InputStream abcLogo = new ClassPathResource("images/abcib-logo.jpg").getInputStream();
 			Image image2 = Image.getInstance(FileCopyUtils.copyToByteArray(abcLogo));
 			image2.scaleAbsoluteHeight(75);
@@ -470,7 +487,7 @@ public class ApplicationPDFGenerator {
 			image2.setAbsolutePosition(492f, 738f);
 			document.add(image2);
 		} catch (Exception e) {
-			log.error(e.getMessage());
+			log.error("Failed to add letterhead logo to PDF: {}", e.getMessage());
 		}
 	}
 

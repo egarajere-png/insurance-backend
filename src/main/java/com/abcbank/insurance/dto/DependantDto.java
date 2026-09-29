@@ -15,5 +15,6 @@ public class DependantDto {
 	private String mobileNumber;
 	private String email;
 	private int customerId;
+	/** DEPENDANT | BENEFICIARY | NOMINATED | BOTH (case-insensitive). Defaults to DEPENDANT. */
 	private String type;
 }

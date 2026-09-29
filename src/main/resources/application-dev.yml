@@ -1,14 +1,14 @@
 spring:
   jpa:
+    hibernate:
+      # "update" only adds missing tables/columns. Widening/relaxing existing
+      # columns (e.g. customer.gender) is handled by DbSchemaFixer at startup.
+      ddl-auto: update
+    open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        ddl-auto: update
-    database-platform: org.hibernate.dialect.PostgreSQL94Dialect
-    generate-ddl: true
   datasource:
     username: insurance_user
     password: password
     url: jdbc:postgresql://localhost:5432/insurance?createDatabaseIfNotExist=true
-
-    

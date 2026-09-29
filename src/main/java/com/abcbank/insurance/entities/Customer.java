@@ -32,7 +32,9 @@ public class Customer {
 	private String pinNumber;
 	@Column(length = 64, nullable = false, columnDefinition = "varchar(64) default ''")
 	private String occupation;
-	@Column(length = 1, nullable = false)
+	// "Male" | "Female" | "Other". Was varchar(1) NOT NULL, which broke on
+	// anything but a single letter (or a missing value) and surfaced as a 500.
+	@Column(length = 16, nullable = true)
 	private String gender;
 	@Column(length = 20, nullable = false)
 	private String mobileNumber;
@@ -45,7 +47,7 @@ public class Customer {
 	@Column(length = 64, nullable = false, columnDefinition = "varchar(64) default ''")
 	private String city;
 	@Column(nullable = false)
-	private int dependantsNo;
+	private int dependantsNo = 0;
 	private Timestamp createdOn;
 	@Column(length = 32)
 	private String createdBy;

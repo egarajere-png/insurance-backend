@@ -3,8 +3,9 @@ package com.abcbank.insurance.entities;
 import java.sql.Timestamp;
 
 import jakarta.persistence.Column;
-
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -20,16 +21,31 @@ public class CustomerProduct {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	@JoinColumn(nullable=true, columnDefinition = "boolean default false")
+	@Column(nullable = true)
 	private boolean paymentMade = false;
-	@JoinColumn(nullable=true, columnDefinition = "boolean default true")
+	@Column(nullable = true)
 	private boolean inGoodHealth = true;
-	@Column(length = 512, nullable=true)
+	@Column(length = 512, nullable = true)
 	private String healthStatus;
-	@JoinColumn(nullable=true, columnDefinition = "boolean default false")
-	private boolean specificDiasgnosis = true;
-	@Column(length = 512, nullable=true)
+	@Column(nullable = true)
+	private boolean specificDiasgnosis = false;
+	@Column(length = 512, nullable = true)
 	private String specificDiasgnosisStatus;
+
+	// ---- Review workflow / audit trail ----
+	@Enumerated(EnumType.STRING)
+	@Column(length = 20)
+	private ApplicationStatus status = ApplicationStatus.PENDING_REVIEW;
+	/** When the customer finished the application (it entered review). */
+	private Timestamp submittedOn;
+	/** When an admin approved or rejected it. */
+	private Timestamp reviewedOn;
+	@Column(length = 64)
+	private String reviewedBy;
+	@Column(length = 512)
+	private String reviewNotes;
+
+	// createdBy = who initiated the application
 	private Timestamp createdOn;
 	@Column(length = 32)
 	private String createdBy;
@@ -37,9 +53,9 @@ public class CustomerProduct {
 	@Column(length = 32)
 	private String edittedBy;
 	@ManyToOne
-    @JoinColumn(name="customer_id", nullable=false)
-    private Customer customer;
+	@JoinColumn(name = "customer_id", nullable = false)
+	private Customer customer;
 	@ManyToOne
-    @JoinColumn(name="product_id", nullable=false)
-    private Product product;
+	@JoinColumn(name = "product_id", nullable = false)
+	private Product product;
 }
