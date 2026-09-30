@@ -35,6 +35,7 @@ public class Dependant {
 	@Column(length = 64, nullable = true, columnDefinition = "varchar(64) default ''")
 	private String email;
 	private PersonType personType;
+
 	private Timestamp createdOn;
 	@Column(length = 32)
 	private String createdBy;
