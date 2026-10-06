@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.abcbank.insurance.dto.CustomerDto;
 import com.abcbank.insurance.entities.Customer;
+import com.abcbank.insurance.entities.Role;
 import com.abcbank.insurance.services.CustomerService;
+import com.abcbank.insurance.util.CurrentUser;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +26,18 @@ public class CustomerController {
 
 	@Autowired
 	private CustomerService cService;
+	@Autowired
+	private CurrentUser currentUser;
 
+	/**
+	 * Admin-only: creates or edits ANY customer record. A customer sets up
+	 * their own profile through POST /api/auth/complete-profile instead, which
+	 * ties the record to their signed-in identity rather than letting them
+	 * specify an arbitrary id here.
+	 */
 	@PostMapping("/customer")
 	public Customer createCustomer(@Valid @RequestBody CustomerDto customerDto) {
+		currentUser.require(Role.ADMIN, Role.SUPERADMIN);
 		return cService.createCustomer(customerDto);
 	}
 

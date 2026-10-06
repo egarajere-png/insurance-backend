@@ -8,12 +8,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.abcbank.insurance.dto.DependantDto;
+import com.abcbank.insurance.entities.AppUser;
 import com.abcbank.insurance.entities.Customer;
 import com.abcbank.insurance.entities.Dependant;
 import com.abcbank.insurance.entities.PersonType;
+import com.abcbank.insurance.entities.Role;
 import com.abcbank.insurance.exception.ApiException;
 import com.abcbank.insurance.repo.DependantRepo;
 import com.abcbank.insurance.util.Actor;
+import com.abcbank.insurance.util.CurrentUser;
 import com.abcbank.insurance.util.Text;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +31,8 @@ public class DependantService {
 	private CustomerService cService;
 	@Autowired
 	private Actor actor;
+	@Autowired
+	private CurrentUser currentUser;
 
 	public Dependant createDependant(DependantDto dto) {
 
@@ -41,6 +46,7 @@ public class DependantService {
 		}
 
 		Customer customer = cService.getCustomer(dto.getCustomerId());
+		requireOwnCustomerIfCustomerRole(customer.getId());
 		PersonType personType = parsePersonType(dto.getType());
 
 		// Only one NOMINATED beneficiary per customer — the PDF picks the first one,
@@ -80,8 +86,17 @@ public class DependantService {
 	public void deleteDependant(int id) {
 		Dependant dependant = getDependant(id);
 		Customer customer = dependant.getCustomer();
+		requireOwnCustomerIfCustomerRole(customer.getId());
 		repo.delete(dependant);
 		syncDependantsCount(customer);
+	}
+
+	/** A CUSTOMER-role user may only add/edit/delete dependants under their own linked customer record. */
+	private void requireOwnCustomerIfCustomerRole(int customerId) {
+		AppUser user = currentUser.get();
+		if (user.getRole() == Role.CUSTOMER && (user.getCustomerId() == null || user.getCustomerId() != customerId)) {
+			throw ApiException.badRequest("You can only manage your own dependants and beneficiaries.");
+		}
 	}
 
 	private void syncDependantsCount(Customer customer) {

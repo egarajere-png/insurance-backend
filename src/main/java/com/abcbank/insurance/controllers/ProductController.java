@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.abcbank.insurance.dto.ProductDto;
 import com.abcbank.insurance.entities.Product;
+import com.abcbank.insurance.entities.Role;
 import com.abcbank.insurance.services.ProductService;
+import com.abcbank.insurance.util.CurrentUser;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,15 +29,19 @@ public class ProductController {
 
 	@Autowired
 	private ProductService pService;
+	@Autowired
+	private CurrentUser currentUser;
 
 	@PostMapping("/product")
 	public Product createProduct(@RequestBody ProductDto productDto) {
+		currentUser.require(Role.ADMIN, Role.SUPERADMIN);
 		return pService.createProduct(productDto);
 	}
 
 	/** Edit an existing product. The UI's "Edit" action on the product details popup. */
 	@PutMapping("/product/{id}")
 	public Product updateProduct(@PathVariable int id, @RequestBody ProductDto productDto) {
+		currentUser.require(Role.ADMIN, Role.SUPERADMIN);
 		productDto.setId(id);
 		return pService.createProduct(productDto);
 	}
@@ -53,6 +59,7 @@ public class ProductController {
 	@DeleteMapping("/product/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteProduct(@PathVariable int id) {
+		currentUser.require(Role.ADMIN, Role.SUPERADMIN);
 		pService.deleteProduct(id);
 	}
 }

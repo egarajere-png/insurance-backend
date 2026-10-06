@@ -20,3 +20,18 @@ logging:
   logback:
     rollingpolicy:
       max-history: 100
+
+firebase:
+  # Path to the Firebase service account JSON (Firebase Console -> Project
+  # Settings -> Service Accounts -> Generate new private key). Either a
+  # filesystem path or a classpath resource name (e.g. if you drop the file
+  # into src/main/resources). Keep this file OUT of git.
+  credentials-path: ${FIREBASE_CREDENTIALS_PATH:firebase-service-account.json}
+
+app:
+  # The email that becomes SUPERADMIN automatically the first time it signs
+  # in — how the very first superadmin gets in on a brand-new deployment.
+  # Set this to your own email, deploy, sign in once, then you can leave it
+  # set (re-signing in won't re-grant anything once the account exists) or
+  # blank it out.
+  superadmin-email: egarajere@gmail.com

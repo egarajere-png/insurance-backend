@@ -1,6 +1,8 @@
 package com.abcbank.insurance.entities;
 
 import java.sql.Timestamp;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,6 +12,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
@@ -58,4 +62,14 @@ public class CustomerProduct {
 	@ManyToOne
 	@JoinColumn(name = "product_id", nullable = false)
 	private Product product;
+
+	/**
+	 * Which of the customer's dependants/beneficiaries this specific
+	 * application covers — chosen at application time (all, some, or none),
+	 * not implicitly "every dependant the customer has". Drives the PDF's
+	 * dependants section.
+	 */
+	@ManyToMany
+	@JoinTable(name = "application_covered_people", joinColumns = @JoinColumn(name = "application_id"), inverseJoinColumns = @JoinColumn(name = "dependant_id"))
+	private Set<Dependant> coveredPeople = new LinkedHashSet<>();
 }
