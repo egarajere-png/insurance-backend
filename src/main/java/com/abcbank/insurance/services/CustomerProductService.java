@@ -70,6 +70,8 @@ public class CustomerProductService {
 
 		boolean isUpdate = dto.getId() > 0;
 
+		boolean isCustomerRole = currentUser.get().getRole() == Role.CUSTOMER;
+
 		if (isUpdate) {
 			customerProduct = repo.findById(dto.getId());
 
@@ -78,11 +80,45 @@ public class CustomerProductService {
 						"Application " + dto.getId() + " was not found."
 				);
 			}
-		}
 
-		customerProduct = customerProduct == null
-				? new CustomerProduct()
-				: customerProduct;
+			/*
+			 * Ownership is checked against the STORED application's owner, never
+			 * against the customerId in the request body (which the caller
+			 * controls). Otherwise a customer could edit someone else's
+			 * application by sending their own customerId with another
+			 * application's id.
+			 */
+			requireOwnCustomerIfCustomerRole(
+					customerProduct.getCustomer().getId()
+			);
+
+			/*
+			 * An application can't be handed to another customer or switched to
+			 * another product by an update (the switch would also skip the
+			 * duplicate-application check below).
+			 */
+			if (customerProduct.getCustomer().getId() != dto.getCustomerId()) {
+				throw ApiException.badRequest(
+						"An application can't be moved to a different customer."
+				);
+			}
+			if (customerProduct.getProduct().getId() != dto.getProductId()) {
+				throw ApiException.badRequest(
+						"The product on an existing application can't be changed. Submit a new application instead."
+				);
+			}
+
+			/*
+			 * Once an admin has decided, the application is part of the audit
+			 * trail and the approved PDF must match what was reviewed, so only
+			 * applications still waiting for review may be edited.
+			 */
+			if (customerProduct.getStatus() != ApplicationStatus.PENDING_REVIEW) {
+				throw ApiException.conflict(
+						"Only applications that are pending review can be edited."
+				);
+			}
+		}
 
 		Customer customer = cService.getCustomer(dto.getCustomerId());
 		Product product = pService.getProduct(dto.getProductId());
@@ -147,13 +183,17 @@ public class CustomerProductService {
 		customerProduct.setSpecificDiasgnosisStatus(
 				dto.getSpecificDiasgnosisStatus()
 		);
-		customerProduct.setPaymentMade(dto.isPaymentMade());
+		/*
+		 * Only staff may record a payment; a customer's request can never
+		 * mark their own application as paid (new applications default to
+		 * unpaid, and an existing value is left untouched).
+		 */
+		if (!isCustomerRole) {
+			customerProduct.setPaymentMade(dto.isPaymentMade());
+		}
 
 		customerProduct.setCoveredPeople(
-				resolveCoveredPeople(
-						customer,
-						dto.getCoveredPersonIds()
-				)
+				coveredPeopleFor(customer, dto.getCoveredPersonIds())
 		);
 
 		if (!isUpdate) {
@@ -206,6 +246,23 @@ public class CustomerProductService {
 					"You can only manage your own applications."
 			);
 		}
+	}
+
+	/**
+	 * TEMPORARY: choosing which dependants/beneficiaries an application covers
+	 * is switched off while the bank owners decide how it should work. While
+	 * this is false, every application covers ALL of the customer's
+	 * dependants and beneficiaries and any coveredPersonIds sent by a client
+	 * are ignored. Flip to true (and restore the selection step in the UI) to
+	 * bring per-application selection back.
+	 */
+	private static final boolean ALLOW_COVERAGE_SELECTION = false;
+
+	private Set<Dependant> coveredPeopleFor(Customer customer, List<Integer> requestedIds) {
+		if (ALLOW_COVERAGE_SELECTION) {
+			return resolveCoveredPeople(customer, requestedIds);
+		}
+		return new LinkedHashSet<>(dService.getCustomerDependants(customer));
 	}
 
 	/**
@@ -284,6 +341,14 @@ public class CustomerProductService {
 		);
 
 		customerProduct.setReviewNotes(notes);
+
+		/*
+		 * Everyone on the customer's file is covered; pick up anyone added
+		 * after the application was submitted.
+		 */
+		customerProduct.setCoveredPeople(
+				coveredPeopleFor(customerProduct.getCustomer(), null)
+		);
 
 		customerProduct = repo.save(customerProduct);
 

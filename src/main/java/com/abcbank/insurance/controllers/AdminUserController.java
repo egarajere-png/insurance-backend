@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.abcbank.insurance.dto.AdminUserDto;
 import com.abcbank.insurance.dto.RoleUpdateDto;
-import com.abcbank.insurance.entities.AppUser;
 import com.abcbank.insurance.entities.Role;
 import com.abcbank.insurance.exception.ApiException;
 import com.abcbank.insurance.services.AppUserService;
@@ -25,12 +25,12 @@ public class AdminUserController {
 	private AppUserService appUserService;
 
 	@GetMapping
-	public List<AppUser> list() {
+	public List<AdminUserDto> list() {
 		return appUserService.listAll();
 	}
 
 	@PostMapping("/{id}/role")
-	public AppUser updateRole(@PathVariable int id, @RequestBody RoleUpdateDto dto) {
+	public AdminUserDto updateRole(@PathVariable int id, @RequestBody RoleUpdateDto dto) {
 		Role role = parseRole(dto.getRole());
 		return appUserService.updateRole(id, role);
 	}
