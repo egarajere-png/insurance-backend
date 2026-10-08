@@ -1,0 +1,10 @@
+target/
+logs/
+.git/
+.idea/
+.vscode/
+
+*.log
+*.class
+
+firebase-service-account.json
